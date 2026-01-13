@@ -739,7 +739,7 @@ struct AddLeadView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     
                     // Header
@@ -1106,6 +1106,7 @@ struct LeadCardRow: View {
     
     @State private var showActionMenu = false
     @State private var showDetailSheet = false
+    @State private var showScheduleSheet = false
     
     var statusColor: Color {
         let colorName = LeadStatus.getColor(for: lead.status)
@@ -1165,41 +1166,42 @@ struct LeadCardRow: View {
                 Spacer()
                 
                 
-                // Action Buttons (Icon Only)
-                HStack(spacing: 12) {
-                    // View
+                // Action Menu
+                Menu {
                     Button(action: {
                         showDetailSheet = true
                     }) {
-                        Image(systemName: "eye.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.blue)
+                        Label("View", systemImage: "eye")
                     }
                     
-                    // Edit
                     Button(action: onEdit) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 14))
-                            .foregroundColor(.orange)
+                        Label("Edit", systemImage: "pencil")
                     }
                     
-                    // Schedule
-                    Button(action: {}) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 14))
-                            .foregroundColor(.purple)
+                    Button(action: {
+                        showScheduleSheet = true
+                    }) {
+                        Label("Schedule", systemImage: "calendar")
                     }
                     
-                    // Delete
-                    Button(action: onDelete) {
-                        Image(systemName: "trash.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.red)
+                    Button(role: .destructive, action: onDelete) {
+                        Label("Delete", systemImage: "trash")
                     }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.purple)
+                        .frame(width: 32, height: 32)
+                        .background(Color.purple.opacity(0.1))
+                        .cornerRadius(8)
                 }
+                .tint(.purple)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
+            .sheet(isPresented: $showScheduleSheet) {
+                 ScheduleFollowUpSheet(firebaseService: FirebaseService.shared, selectedLead: lead)
+            }
             
             Divider()
                 .background(Color.gray.opacity(0.2))

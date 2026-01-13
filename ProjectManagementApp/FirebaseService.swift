@@ -40,6 +40,7 @@ class FirebaseService: ObservableObject {
     @Published var notes: [SavedNote] = []
     @Published var knowledgeItems: [KnowledgeItem] = []
     @Published var adminKnowledgeItems: [AdminKnowledgeItem] = []
+    @Published var leadFollowUpTypes: [String] = ["Phone Call", "Email", "Meeting", "Video Call"] // Default + fetched
     
     struct KnowledgeActivity: Identifiable, Codable {
         var id: String
@@ -76,6 +77,7 @@ class FirebaseService: ObservableObject {
     
     private init() {
         fetchArchivedTasks()
+        fetchLeadSettings()
     }
     
     // MARK: - Fetch Projects
@@ -974,6 +976,11 @@ class FirebaseService: ObservableObject {
                 self.leadCategories = data["productCategories"] as? [String] ?? []
                 self.leadPriorities = data["priorities"] as? [String] ?? []
                 self.leadStatuses = data["statuses"] as? [String] ?? []
+                
+                // Fetch dynamic follow-up types
+                if let types = data["followupTypes"] as? [String] {
+                     self.leadFollowUpTypes = types
+                }
                 
                 // Fallback for sectors if empty (per user request)
                 if self.leadSectors.isEmpty {
@@ -4969,6 +4976,7 @@ class FirebaseService: ObservableObject {
     }
     
     // MARK: - Hierarchy Management
+
     func listenHierarchy() {
         db.collection("settings").document("hierarchy")
             .addSnapshotListener { [weak self] snapshot, error in
