@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Microphone Usage Description</key>
+	<string>We need microphone access to capture your voice for dictation</string>
+	<key>Speech Recognition Usage Description</key>
+	<string>We use speech recognition so you can dictate task titles and descriptions</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBIm76KzUks7GeMgdd2d0xk4GPsLTJFmZI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>821285689386</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.mrunal.dev</string>
+	<key>PROJECT_ID</key>
+	<string>cosmos-erp-c8eda</string>
+	<key>STORAGE_BUCKET</key>
+	<string>cosmos-erp-c8eda.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:821285689386:ios:08bfb826d4c113456c4b53</string>
+</dict>
+</plist>
