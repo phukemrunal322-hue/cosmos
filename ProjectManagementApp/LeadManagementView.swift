@@ -669,113 +669,7 @@ struct DataRow: View {
 }
 
 
-struct LeadListRow: View {
-    let lead: Lead
-    var onEdit: () -> Void
-    var onDelete: () -> Void
-    
-    var statusColor: Color {
-        let colorName = LeadStatus.getColor(for: lead.status)
-        switch colorName {
-        case "blue": return .blue
-        case "orange": return .orange
-        case "purple": return .purple
-        case "yellow": return .yellow
-        case "pink": return .pink
-        case "green": return .green
-        case "red": return .red
-        case "gray": return .gray
-        default: return .gray
-        }
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                // Initial Circle
-                Circle()
-                    .fill(statusColor.opacity(0.1))
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Text(lead.name.prefix(1).uppercased())
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(statusColor)
-                    )
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(lead.name)
-                            .font(.headline)
-                        
-                        Spacer()
-                        
-                        Text(lead.status)
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(statusColor.opacity(0.1))
-                            .foregroundColor(statusColor)
-                            .cornerRadius(8)
-                    }
-                    
-                    if let company = lead.companyName {
-                        Text(company)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    }
-                    
-                    HStack(spacing: 12) {
-                        if let phone = lead.phone {
-                            Label(phone, systemImage: "phone.fill")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        if let email = lead.email {
-                            Label(email, systemImage: "envelope.fill")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding(.top, 4)
-                }
-            }
-            
-            Divider()
-            
-            HStack {
-                if let followUp = lead.followUpDate {
-                    Label("Follow-up: \(followUp.formatted(date: .abbreviated, time: .shortened))", systemImage: "bell.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                } else {
-                    Text("No follow-up scheduled")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                
-                Spacer()
-                
-                HStack(spacing: 16) {
-                    Button(action: onEdit) {
-                        Image(systemName: "pencil")
-                            .foregroundColor(.blue)
-                    }
-                    
-                    Button(action: onDelete) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.05), radius: 2, y: 1)
-    }
-}
+
 
 struct AddLeadView: View {
     let existingLead: Lead?
@@ -1422,7 +1316,7 @@ struct LeadCardRow: View {
         .shadow(color: statusColor.opacity(0.15), radius: 6, x: 0, y: 2)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(statusColor.opacity(0.2), lineWidth: 1)
+                .stroke(Color.gray.opacity(0.8), lineWidth: 3)
         )
         .sheet(isPresented: $showDetailSheet) {
             LeadDetailSheet(lead: lead)
