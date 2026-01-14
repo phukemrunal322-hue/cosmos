@@ -89,17 +89,24 @@ struct LeadManagementView: View {
                 }
                 
                 // Tabs
-                HStack(spacing: 20) {
-                    TabButton(title: "Leads", icon: "person.3.fill", isSelected: selectedTab == "Leads") {
-                        selectedTab = "Leads"
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 20) {
+                        TabButton(title: "Leads", icon: "person.3.fill", isSelected: selectedTab == "Leads") {
+                            selectedTab = "Leads"
+                        }
+                        
+                        TabButton(title: "Follow-ups", icon: "phone.fill", isSelected: selectedTab == "Follow-ups") {
+                            selectedTab = "Follow-ups"
+                        }
+                        
+                        TabButton(title: "Settings", icon: "gearshape.fill", isSelected: selectedTab == "Settings") {
+                            selectedTab = "Settings"
+                        }
                     }
-                    
-                    TabButton(title: "Follow-ups", icon: "phone.fill", isSelected: selectedTab == "Follow-ups") {
-                        selectedTab = "Follow-ups"
-                    }
-                    
-                    Spacer()
+                    .padding(.vertical, 4) // Add some padding for the shadow/scroll
                 }
+                
+                if selectedTab != "Settings" {
                 
                 // Stats Cards
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -187,10 +194,15 @@ struct LeadManagementView: View {
                         Spacer()
                     }
                 }
+                }
             }
             .padding()
             .background(Color(.systemBackground))
             .shadow(color: .gray.opacity(0.1), radius: 2, y: 2)
+            
+            if selectedTab == "Settings" {
+                LeadSettingsView()
+            } else {
             
             // Leads List
             if firebaseService.leads.isEmpty {
@@ -277,6 +289,7 @@ struct LeadManagementView: View {
                 }
             }
         }
+    }
         .background(Color.gray.opacity(0.05))
         .onAppear {
             if firebaseService.leads.isEmpty {
@@ -319,6 +332,9 @@ struct TabButton: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                 Text(title)
+                    .font(.subheadline) // Slightly smaller but legible
+                    .fontWeight(.medium)
+                    .fixedSize() // Ensures text is not truncated
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 16)
@@ -1616,3 +1632,358 @@ struct DetailInfoCard: View {
         .shadow(color: .black.opacity(0.03), radius: 4, y: 2)
     }
 }
+
+struct LeadSettingsView: View {
+    @ObservedObject private var firebaseService = FirebaseService.shared
+    @State private var showingAddAlert = false
+    @State private var newItemName = ""
+    @State private var currentEditingType: SettingType?
+    @State private var selectedSettingsTab = "Lead Settings" // Lead Settings or Follow-up Settings
+    
+    enum SettingType: String, Identifiable {
+        case status = "statuses"
+        case priority = "priorities"
+        case source = "sources"
+        case sector = "sectors"
+        case product = "products"
+        case category = "productCategories"
+        case followUp = "followupTypes"
+        
+        var id: String { rawValue }
+        
+        var title: String {
+            switch self {
+            case .status: return "Lead Statuses"
+            case .priority: return "Priority Levels"
+            case .source: return "Lead Sources"
+            case .sector: return "Sectors"
+            case .product: return "Products"
+            case .category: return "Product Categories"
+            case .followUp: return "Follow-up Types"
+            }
+        }
+    }
+    
+    var leadSettingsCount: Int {
+        firebaseService.leadStatuses.count +
+        firebaseService.leadPriorities.count +
+        firebaseService.leadSources.count + 
+        firebaseService.leadProducts.count + 
+        firebaseService.leadSectors.count + 
+        firebaseService.leadCategories.count
+    }
+    
+    var followUpSettingsCount: Int {
+        firebaseService.leadFollowUpTypes.count
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Main Header - Lead Management Settings
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.1))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 28))
+                        .foregroundColor(.blue)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Lead Management Settings")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("Configure lead statuses, priorities, and other options")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(16)
+            .padding(.horizontal)
+            .padding(.top)
+            
+            // Tab Buttons
+            HStack(spacing: 0) {
+                SettingsTabButton(
+                    title: "Lead Settings",
+                    icon: "person.crop.circle.fill",
+                    count: leadSettingsCount,
+                    isSelected: selectedSettingsTab == "Lead Settings"
+                ) {
+                    selectedSettingsTab = "Lead Settings"
+                }
+                
+                SettingsTabButton(
+                    title: "Follow-up Settings",
+                    icon: "phone.circle.fill",
+                    count: followUpSettingsCount,
+                    isSelected: selectedSettingsTab == "Follow-up Settings"
+                ) {
+                    selectedSettingsTab = "Follow-up Settings"
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 16)
+            
+            // Content based on selected tab
+            ScrollView {
+                VStack(spacing: 24) {
+                    if selectedSettingsTab == "Lead Settings" {
+                        // Lead Settings Content
+                        
+                        // 1. Lead Statuses
+                        SettingsSectionView(title: "Lead Statuses", icon: "flag.fill", color: .indigo, items: firebaseService.leadStatuses) {
+                            currentEditingType = .status
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .status, items: firebaseService.leadStatuses)
+                        }
+                        
+                        // 2. Priority Levels
+                        SettingsSectionView(title: "Priority Levels", icon: "exclamationmark.triangle.fill", color: .red, items: firebaseService.leadPriorities) {
+                            currentEditingType = .priority
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .priority, items: firebaseService.leadPriorities)
+                        }
+                        
+                        // 3. Lead Sources
+                        SettingsSectionView(title: "Lead Sources", icon: "arrow.down.left.circle.fill", color: .blue, items: firebaseService.leadSources) {
+                            currentEditingType = .source
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .source, items: firebaseService.leadSources)
+                        }
+                        
+                        // 2. Products
+                        SettingsSectionView(title: "Products", icon: "cube.fill", color: .purple, items: firebaseService.leadProducts) {
+                            currentEditingType = .product
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .product, items: firebaseService.leadProducts)
+                        }
+                        
+                        // 3. Sectors
+                        SettingsSectionView(title: "Sectors", icon: "building.2.fill", color: .orange, items: firebaseService.leadSectors) {
+                            currentEditingType = .sector
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .sector, items: firebaseService.leadSectors)
+                        }
+                        
+                        // 4. Categories
+                        SettingsSectionView(title: "Product Categories", icon: "tag.fill", color: .pink, items: firebaseService.leadCategories) {
+                            currentEditingType = .category
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .category, items: firebaseService.leadCategories)
+                        }
+                        
+                    } else {
+                        // Follow-up Settings Content
+                        
+                        SettingsSectionView(title: "Follow-up Types", icon: "phone.circle.fill", color: .green, items: firebaseService.leadFollowUpTypes) {
+                            currentEditingType = .followUp
+                            showingAddAlert = true
+                        } onDelete: { index in
+                            deleteItem(at: index, type: .followUp, items: firebaseService.leadFollowUpTypes)
+                        }
+                    }
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 40)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .alert("Add New Item", isPresented: $showingAddAlert) {
+            TextField("Item Name", text: $newItemName)
+            Button("Cancel", role: .cancel) {
+                newItemName = ""
+                currentEditingType = nil
+            }
+            Button("Add") {
+                if let type = currentEditingType, !newItemName.isEmpty {
+                    addItem(name: newItemName, type: type)
+                }
+                newItemName = ""
+                currentEditingType = nil
+            }
+        } message: {
+            Text("Enter the name for the new option in \(currentEditingType?.title ?? "Settings")")
+        }
+    }
+    
+    func addItem(name: String, type: SettingType) {
+        var items: [String] = []
+        switch type {
+        case .status: items = firebaseService.leadStatuses
+        case .priority: items = firebaseService.leadPriorities
+        case .source: items = firebaseService.leadSources
+        case .sector: items = firebaseService.leadSectors
+        case .product: items = firebaseService.leadProducts
+        case .category: items = firebaseService.leadCategories
+        case .followUp: items = firebaseService.leadFollowUpTypes
+        }
+        
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !items.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+            items.append(trimmed)
+            firebaseService.updateLeadSettings(field: type.rawValue, values: items) { _ in }
+        }
+    }
+    
+    func deleteItem(at index: Int, type: SettingType, items: [String]) {
+        var newItems = items
+        if index < newItems.count {
+            newItems.remove(at: index)
+            firebaseService.updateLeadSettings(field: type.rawValue, values: newItems) { _ in }
+        }
+    }
+}
+
+struct SettingsSectionView: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let items: [String]
+    let onAdd: () -> Void
+    let onDelete: (Int) -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: icon)
+                        .foregroundColor(color)
+                        .font(.title3)
+                    Text(title)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                }
+                
+                Spacer()
+                
+                Button(action: onAdd) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.caption.bold())
+                        Text("Add")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(color)
+                    .cornerRadius(20)
+                }
+            }
+            .padding(.top, 4)
+            
+            if items.isEmpty {
+                Text("No items configured")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                // Vertical List of Items
+                VStack(spacing: 12) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                        HStack {
+                            Image(systemName: "square.grid.2x2.fill")
+                                .font(.caption)
+                                .foregroundColor(color.opacity(0.6))
+                                .frame(width: 24, height: 24)
+                            
+                            Text(item)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Button(action: { onDelete(index) }) {
+                                Image(systemName: "trash")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(8)
+                            }
+                        }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.1), lineWidth: 1)
+                        )
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.tertiarySystemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.05), radius: 5, x: 0, y: 2)
+        .padding(.horizontal)
+    }
+}
+
+struct SettingsTabButton: View {
+    let title: String
+    let icon: String
+    let count: Int
+    let isSelected: Bool
+    let action: () -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .fixedSize()
+                
+                // Badge count
+                Text("\(count)")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(isSelected ? Color.blue : Color.green)
+                    .cornerRadius(10)
+            }
+            .foregroundColor(isSelected ? .blue : .gray)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .fixedSize()
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1.5)
+            )
+        }
+    }
+}
+
+

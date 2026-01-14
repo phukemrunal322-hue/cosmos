@@ -994,6 +994,14 @@ class FirebaseService: ObservableObject {
             }
         }
     }
+    
+    func updateLeadSettings(field: String, values: [String], completion: @escaping (Error?) -> Void) {
+        db.collection("leadSettings").document("config").setData([field: values], merge: true) { error in
+            DispatchQueue.main.async {
+                completion(error)
+            }
+        }
+    }
 
     func fetchLeads() {
         isLoading = true
